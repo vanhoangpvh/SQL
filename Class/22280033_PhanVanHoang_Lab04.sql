@@ -1,12 +1,30 @@
 --Cau 1
-SELECT k.makh ,k.hoten, k.thanhpho ,k.quocgia ,k.sodt 
+SELECT k.makh ,k.hoten, k.diachi ,k.thanhpho ,k.quocgia ,k.sodt 
 FROM khachhang k 
 JOIN dondathang d ON k.makh = d.makh 
-GROUP BY k.makh , k.hoten,k.thanhpho ,k.quocgia ,k.sodt  
-HAVING sum(trigia) > 3000;
+GROUP BY k.makh , k.hoten,k.diachi ,k.thanhpho ,k.quocgia ,k.sodt  
+HAVING sum(d.trigia) > 3000;
+
+--Q1
+select *
+from KHACHHANG as KH
+where KH.MaKH in (
+   select MaKH
+   from DONDATHANG as DDH
+   group by DDH.MaKH
+   having sum(DDH.TriGia)>3000)
+   
+   
+SELECT * 
+FROM  khachhang k 
+WHERE k.makh in(
+   SELECT d.makh
+   FROM dondathang d
+   GROUP BY d.makh
+   HAVING sum(d.trigia)>3000);
 
 --Cau 2
-SELECT m.mamh, m.tenmh, m.dongia ,avg(d.trigia),sum(c.soluong) AS Tong_so_luong_don_hang
+SELECT m.mamh, m.tenmh, m.dongia ,avg(c.dongia),sum(c.soluong) AS Tong_so_luong_don_hang
 FROM mathang m 
 JOIN chitietddh c ON m.mamh = c.mamh 
 JOIN dondathang d ON d.maddh = c.maddh 
@@ -14,10 +32,16 @@ WHERE EXTRACT (MONTH FROM d.ngaydathang) = 7 AND EXTRACT (YEAR FROM d.ngaydathan
 GROUP BY m.mamh, m.tenmh ,m.dongia ;
 
 --Cau 3
-SELECT m.mamh,m.tenmh
-FROM mathang m
-JOIN chitietddh c  ON c.mamh = m.mamh 
-WHERE c.soluong = (SELECT max(soluong) FROM chitietddh c2);
+WITH tong_so_luong(mamh,tongsoluong) AS(
+   SELECT mamh, sum(soluong)
+   FROM chitietddh c
+   GROUP BY mamh
+)
+SELECT m.mamh,m.tenmh 
+FROM mathang m 
+JOIN chitietddh c ON c.mamh = m.mamh 
+GROUP BY m.mamh ,m.tenmh 
+HAVING sum(c.soluong) = (SELECT max(tong_so_luong.tongsoluong) FROM tong_so_luong);
 
 --Cau 4
 SELECT d.maddh ,d.ngaydathang ,d.makh ,d.trigia 
@@ -25,6 +49,22 @@ FROM mathang m
 JOIN chitietddh c ON m.mamh = c.mamh 
 JOIN dondathang d ON d.maddh = c.maddh 
 WHERE c.soluong = (SELECT max(c2.soluong)FROM chitietddh c2);
+
+SELECT *
+FROM dondathang d
+JOIN chitietddh c ON d.maddh = c.maddh
+
+with TongMatHang (MaDDH,TongMH) as (
+   select MaDDH, count(CT.MaMH)
+   from CHITIETDDH as CT
+   group by MaDDH
+)
+select DDH.MaDDH, count(CT.MaMH) as 'Tong so mat hang'
+from DONDATHANG as DDH join CHITIETDDH as CT on DDH.MaDDH=CT.MaDDH
+join TongMatHang as TMH on CT.MaDDH=TMH.MaDDH
+group by DDH.MaDDH
+having count(CT.MaMH)=
+   (select max(TMH.TongMH) from TongMatHang as TMH)
 
 --Cau 5
 SELECT k.makh,k.hoten, sum(c.soluong) AS tong_so_don_hang
