@@ -1,5 +1,3 @@
-create database csdl_congty
-
 create schema Csdl_Congty;
 
 -- Select the schema Csdl_Congty to create the tables
